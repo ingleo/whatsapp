@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Chats, Messages } from 'api/collections';
+import { Chat } from 'api/models';
 import { NavController, NavParams } from 'ionic-angular';
 import { Observable } from 'rxjs';
+import { MessagesPage } from '../messages/messages';
 import * as moment from 'moment';
-import { Chat, MessageType } from '../../models';
 
 /*
   Generated class for the Chats page.
@@ -13,77 +15,39 @@ import { Chat, MessageType } from '../../models';
 @Component({
   templateUrl: 'chats.html'
 })
-export class ChatsPage {
-  chats: Observable<Chat[]>;
+export class ChatsPage implements OnInit {
+  chats;
 
-  constructor(public navCtrl: NavController, public navParams: NavParams) {
-    this.chats = this.findChats();
-  }
+  constructor(public navCtrl: NavController, public navParams: NavParams) { }
 
   ionViewDidLoad() {
     console.log('ionViewDidLoad ChatsPage');
   }
 
-  private findChats(): Observable<Chat[]> {
-    return Observable.of([
-      {
-        _id: '0',
-        title: 'Ethan Gonzalez',
-        picture: 'https://randomuser.me/api/portraits/thumb/men/1.jpg',
-        lastMessage: {
-          content: 'You on your way?',
-          createdAt: moment().subtract(1, 'hours').toDate(),
-          type: MessageType.TEXT
-        }
-      },
-      {
-        _id: '1',
-        title: 'Bryan Wallace',
-        picture: 'https://randomuser.me/api/portraits/thumb/lego/1.jpg',
-        lastMessage: {
-          content: 'Hey, it\'s me',
-          createdAt: moment().subtract(2, 'hours').toDate(),
-          type: MessageType.TEXT
-        }
-      },
-      {
-        _id: '2',
-        title: 'Avery Stewart',
-        picture: 'https://randomuser.me/api/portraits/thumb/women/1.jpg',
-        lastMessage: {
-          content: 'I should buy a boat',
-          createdAt: moment().subtract(1, 'days').toDate(),
-          type: MessageType.TEXT
-        }
-      },
-      {
-        _id: '3',
-        title: 'Katie Peterson',
-        picture: 'https://randomuser.me/api/portraits/thumb/women/2.jpg',
-        lastMessage: {
-          content: 'Look at my mukluks!',
-          createdAt: moment().subtract(4, 'days').toDate(),
-          type: MessageType.TEXT
-        }
-      },
-      {
-        _id: '4',
-        title: 'Ray Edwards',
-        picture: 'https://randomuser.me/api/portraits/thumb/men/2.jpg',
-        lastMessage: {
-          content: 'This is wicked good ice cream.',
-          createdAt: moment().subtract(2, 'weeks').toDate(),
-          type: MessageType.TEXT
-        }
-      }
-    ]);
+  ngOnInit() {
+    this.chats = Chats
+      .find({})
+      .mergeMap((chats: Chat[]) =>
+        Observable.combineLatest(
+          ...chats.map((chat: Chat) =>
+            Messages
+              .find({ chatId: chat._id })
+              .startWith(null)
+              .map(messages => {
+                if (messages) chat.lastMessage = messages[0];
+                return chat;
+              })
+          )
+        )
+      ).zone();
+  }
+
+  showMessages(chat): void {
+    this.navCtrl.push(MessagesPage, { chat });
   }
 
   removeChat(chat: Chat): void {
-    this.chats = this.chats.map<Chat[]>(chatsArray => {
-      const chatIndex = chatsArray.indexOf(chat);
-      chatsArray.splice(chatIndex, 1);
-      return chatsArray;
+    Chats.remove({ _id: chat._id }).subscribe(() => {
     });
   }
 }

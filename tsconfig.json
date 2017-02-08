@@ -10,7 +10,9 @@
       "es2015"
     ],
     "module": "commonjs",
+    "isolatedModules": false,
     "moduleResolution": "node",
+    "removeComments": false,
     "paths": {
       "api/*": [
         "./api/server/*"
