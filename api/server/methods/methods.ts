@@ -1,6 +1,6 @@
-import { Chats } from './collections/chats';
-import { Messages } from './collections/messages';
-import { MessageType } from './models';
+import { Chats } from '../collections/chats';
+import { Messages } from '../collections/messages';
+import { MessageType } from '../models';
 
 Meteor.methods({
   addMessage(type: MessageType, chatId: string, content: string) {
